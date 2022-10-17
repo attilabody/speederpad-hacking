@@ -6,23 +6,23 @@ export SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 parse_params $@
 
-if [ ! -d "$WP" ]; then mkdir "$WP"; fi
+if [ ! -d "${WP}" ]; then mkdir "${WP}"; fi
 
-if [ -b "$IMG" ]; then
-  parts=( "$IMG"1 "$IMG"2 )
+if [ -b "${IMG}" ]; then
+  part="${IMG}1"
 else
-  loopdev=( $(sudo losetup --find --show --partscan "$IMG") )
-  parts=( "${loopdev}p1" "${loopdev}p2" )
+  loopdev=( $(sudo losetup --find --show --partscan "${IMG}") )
+  part="${loopdev}p1"
 fi
 
-if [ -z "${USE_EXT4}" ]; then
-  sudo mount ${parts[1]} "${WP}" "-ocompress=zstd:15,subvol=${SUBVOL}"
-  sudo mount ${parts[1]} "${WP}/mnt/fs_root" "-osubvolid=0"
+if [ "${ROOTFS}" == "btrfs" ]; then
+  sudo mount ${part} "${WP}" "-ocompress=zstd:15,subvol=${SUBVOL}"
+  sudo mount ${part} "${WP}/mnt/fs_root" "-osubvolid=0"
 else
-  sudo mount ${parts[1]} "${WP}"
+  sudo mount ${part} "${WP}"
 fi
 
-sudo mount ${parts[0]} "${WP}/boot"
+#sudo mount ${parts[0]} "${WP}/boot"
 
 for dir in dev proc sys; do
   [ -d "${WP}/${dir}" ] || sudo mkdir "${WP}/${dir}"
@@ -35,7 +35,7 @@ for dir in run tmp; do
 done
 
 [ -d "${WP}/build" ] && [ -d "${BUILDDIR}" ] && sudo mount --bind "${BUILDDIR}" "${WP}/build"
-[ -d "$WP/var/cache/pacman" ] && [ -d "${CACHE}" ] && sudo mount --bind "${CACHE}" "${WP}/var/cache/pacman"
+[ -d "${WP}/var/cache/pacman" ] && [ -d "${CACHE}" ] && sudo mount --bind "${CACHE}" "${WP}/var/cache/pacman"
 
 [ -d "${WP}/run/systemd/resolve" ] || sudo mkdir -p "${WP}/run/systemd/resolve"
 [ -f "${WP}/run/systemd/resolve/resolv.conf" ] || sudo cp -L /etc/resolv.conf "${WP}/run/systemd/resolve/"

@@ -27,6 +27,7 @@ function parse_userdir
 				shift
 				;;
 			-4 | --ext4 | \
+			-b | --use-btrfs | \
 			-s | --snapshots | \
 			-h | -? | --help )
 				;;
@@ -49,6 +50,9 @@ function parse_params
 		case $1 in
 			-4 | --ext4 )
 				USE_EXT4=1
+				;;
+			-b | --use-btrfs )
+				USE_BTRFS=1
 				;;
 			-ah | --aurhelper )
 				IMG="${2}"
@@ -159,6 +163,17 @@ function parse_params
 	export WIFI_PASSWD="${WIFI_PASSWD:-}"
 	export TRUSTED_NET="${TRUSTED_NET:-}"
 
+	if [ "${USE_EXT4}" ] && [ "${USE_BTRFS}" ]; then
+		echo "Use either EXT4 or BTRFS"
+		false
+	fi
+
+	if [ -z "${USE_EXT4}" ] && [ -z "${USE_BTRFS}" ]; then
+		USE_EXT4=1
+	fi
+
+	[ "${USE_BTRFS}" ] && export USE_BTRFS && export ROOTFS=btrfs
+	[ "${USE_EXT4}" ] && export USE_EXT4 && export ROOTFS=ext4
 }
 
 
